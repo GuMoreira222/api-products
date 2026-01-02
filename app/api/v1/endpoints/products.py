@@ -7,7 +7,15 @@ from app.models.user import User
 
 router = APIRouter()
 
-@router.get("/products", response_model=Product)
+@router.get("/products", response_model=list[Product])
+def get_all_products(
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_user)
+):
+    product_query = ProductQuery(db=db)
+    return product_query.get_all_products()
+
+@router.get("/products/{name}", response_model=Product)
 def get_product(
     name: str,
     db: Session = Depends(deps.get_db),

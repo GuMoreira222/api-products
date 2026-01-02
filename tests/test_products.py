@@ -8,6 +8,32 @@ from app.schemas.product import ProductCreate
 
 
 class TestProductService:
+    def test_get_all_products_success(self, db_session: Session, sample_product_data):
+        product1 = ProductTest(**sample_product_data)
+        product2_data = {
+            "name": "Produto Teste 2",
+            "category": "Categoria Teste",
+            "price": 199.99,
+            "amount": 5
+        }
+        product2 = ProductTest(**product2_data)
+        db_session.add(product1)
+        db_session.add(product2)
+        db_session.commit()
+
+        service = ProductQuery(db=db_session)
+        result = service.get_all_products()
+
+        assert len(result) == 2
+        assert any(p.name == "Produto Teste" for p in result)
+        assert any(p.name == "Produto Teste 2" for p in result)
+
+    def test_get_all_products_empty(self, db_session: Session):
+        service = ProductQuery(db=db_session)
+        result = service.get_all_products()
+
+        assert len(result) == 0
+        assert result == []
     def test_select_product_success(self, db_session: Session, sample_product_data):
         product = ProductTest(**sample_product_data)
         db_session.add(product)
@@ -100,12 +126,46 @@ class TestProductService:
 
 
 class TestProductEndpoints:
+    def test_get_all_products_success(self, authenticated_client, db_session: Session, sample_product_data):
+        product1 = ProductTest(**sample_product_data)
+        product2_data = {
+            "name": "Produto Teste 2",
+            "category": "Categoria Teste",
+            "price": 199.99,
+            "amount": 5
+        }
+        product2 = ProductTest(**product2_data)
+        db_session.add(product1)
+        db_session.add(product2)
+        db_session.commit()
+
+        response = authenticated_client.get("/api/v1/products")
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert len(data) == 2
+        assert any(p["name"] == "Produto Teste" for p in data)
+        assert any(p["name"] == "Produto Teste 2" for p in data)
+
+    def test_get_all_products_empty(self, authenticated_client):
+        response = authenticated_client.get("/api/v1/products")
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert len(data) == 0
+        assert data == []
+
+    def test_get_all_products_unauthorized(self, client):
+        response = client.get("/api/v1/products")
+
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
     def test_get_product_success(self, authenticated_client, db_session: Session, sample_product_data):
         product = ProductTest(**sample_product_data)
         db_session.add(product)
         db_session.commit()
 
-        response = authenticated_client.get("/api/v1/products?name=Produto Teste")
+        response = authenticated_client.get("/api/v1/products/Produto Teste")
 
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
@@ -115,12 +175,12 @@ class TestProductEndpoints:
         assert data["amount"] == 10
 
     def test_get_product_not_found(self, authenticated_client):
-        response = authenticated_client.get("/api/v1/products?name=Produto Inexistente")
+        response = authenticated_client.get("/api/v1/products/Produto Inexistente")
 
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     def test_get_product_unauthorized(self, client):
-        response = client.get("/api/v1/products?name=Produto Teste")
+        response = client.get("/api/v1/products/Produto Teste")
 
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 

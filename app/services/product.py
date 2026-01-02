@@ -63,3 +63,6 @@ class ProductQuery:
         except SQLAlchemyError as e:
             self.db.rollback()
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Database error")
+
+    def get_all_products(self) -> list[Product]:
+        return self.db.query(ProductModel).all()
