@@ -104,7 +104,39 @@ Autentica um usuário e retorna um token JWT.
 
 Todos os endpoints de produtos requerem autenticação via Bearer Token.
 
-#### GET `/api/v1/products?name={nome}`
+#### GET `/api/v1/products`
+Lista todos os produtos.
+
+**Headers:**
+```
+Authorization: Bearer {token}
+```
+
+**Resposta:**
+```json
+[
+    {
+        "id": "uuid",
+        "name": "Produto Teste",
+        "category": "Categoria Teste",
+        "price": 99.99,
+        "amount": 10,
+        "created_at": "2024-01-01T00:00:00Z",
+        "updated_at": "2024-01-01T00:00:00Z"
+    },
+    {
+        "id": "uuid",
+        "name": "Produto Teste 2",
+        "category": "Categoria Teste",
+        "price": 199.99,
+        "amount": 5,
+        "created_at": "2024-01-01T00:00:00Z",
+        "updated_at": "2024-01-01T00:00:00Z"
+    }
+]
+```
+
+#### GET `/api/v1/products/{name}`
 Busca um produto pelo nome.
 
 **Headers:**
@@ -112,7 +144,7 @@ Busca um produto pelo nome.
 Authorization: Bearer {token}
 ```
 
-**Query Parameters:**
+**Path Parameters:**
 - `name`: string (nome do produto)
 
 **Resposta:**
@@ -232,6 +264,10 @@ api-products/
 │   ├── conftest.py               # Fixtures compartilhadas
 │   ├── test_auth.py              # Testes de autenticação
 │   └── test_products.py          # Testes de produtos
+├── .github/
+│   └── workflows/
+│       ├── api-pipeline-ci.yml   # Pipeline de CI (testes em PR)
+│       └── deploy.yml            # Pipeline de CD (deploy automático)
 ├── Dockerfile
 ├── pyproject.toml                # Dependências e configurações
 └── README.md
@@ -254,6 +290,35 @@ A API utiliza autenticação JWT (JSON Web Tokens). Para acessar os endpoints pr
 1. Faça login em `/api/v1/auth` com suas credenciais
 2. Use o token retornado no header `Authorization: Bearer {token}`
 3. O token expira em 30 minutos (configurável)
+
+## 🔄 CI/CD - GitHub Actions
+
+O projeto possui pipelines automatizadas para integração e deploy contínuo:
+
+### Pipeline CI (Continuous Integration)
+**Arquivo:** `.github/workflows/api-pipeline-ci.yml`
+
+Executa automaticamente em Pull Requests para a branch `main`:
+- Instala Python 3.13
+- Instala dependências com Poetry
+- Executa todos os testes com pytest
+- Valida o código antes do merge
+
+### Pipeline CD (Continuous Deployment)
+**Arquivo:** `.github/workflows/deploy.yml`
+
+Executa automaticamente em push para a branch `main`:
+- Faz login no Azure via OIDC
+- Constrói a imagem Docker
+- Faz push da imagem para Azure Container Registry (ACR)
+- Faz deploy automático para Azure Container Apps
+
+**Secrets necessários no GitHub:**
+- `SECRET_KEY`: Chave secreta para JWT
+- `SQLALCHEMY_DATABASE_URL`: URL de conexão do banco
+- `AZURE_CLIENT_ID`: ID do cliente Azure
+- `AZURE_TENANT_ID`: ID do tenant Azure
+- `AZURE_SUBSCRIPTION_ID`: ID da subscription Azure
 
 ## 📝 Notas
 
